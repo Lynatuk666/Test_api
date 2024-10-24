@@ -1,20 +1,23 @@
 import fastapi
 from database_scripts import get_balance, update_balance
 from pydantic import BaseModel
+from fastapi import Response
 
 app = fastapi.FastAPI()
 
 
-@app.get("/api/v1/wallets/{uuid}")
-async def show_balance(uuid):
+@app.get("/api/v1/wallets/{uuid}", status_code=200)
+async def show_balance(uuid, response: Response):
     try:
         result = await get_balance(uuid=int(uuid))
         if result:
-            return f"Wallet - {result[0]['uuid']} Balance - {result[0]['balance']}", 200
+            return {"message": f"Wallet - {result[0]['uuid']} Balance - {result[0]['balance']}"}
         else:
-            return "Wallet doesn't exist", 400
+            response.status_code = 400
+            return {"message": "Wallet doesn't exist"}
     except ValueError:
-        return "Check Wallet UUID", 400
+        response.status_code = 400
+        return {"message": "Check Wallet UUID"}
 
 
 class Operation(BaseModel):
@@ -22,14 +25,17 @@ class Operation(BaseModel):
     amount: int
 
 
-@app.post("/api/v1/wallets/{uuid}/operation")
-async def operations(uuid, operation: Operation):
+@app.post("/api/v1/wallets/{uuid}/operation", status_code=200)
+async def operations(uuid, operation: Operation, response: Response):
     if operation.operationType == "DEPOSIT" or operation.operationType == "WITHDRAW":
         try:
-            return await update_balance(uuid=uuid,
-                                        operation=operation.operationType,
-                                        amount=operation.amount)
+            response.status_code = 200
+            return {"message": await update_balance(uuid=uuid,
+                                                    operation=operation.operationType,
+                                                    amount=operation.amount)}
         except IndexError:
-            return "ERROR. INCORRECT DATA", 400
+            response.status_code = 400
+            return {"message": "ERROR. INCORRECT DATA"}
     else:
-        return "ERROR. INCORRECT DATA", 400
+        response.status_code = 400
+        return {"message": "ERROR. INCORRECT DATA"}

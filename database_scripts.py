@@ -67,12 +67,12 @@ async def update_balance(uuid: int, operation: str, amount: int):
             with connect_db() as con:
                 con.cursor().execute(sql)
                 con.commit()
-            return f"Withdraw successful. Now balance = {(await get_balance(uuid))[0]["balance"]}", 200
-        return "Insufficient funds", 103
+            return f"Withdraw successful. Now balance = {(await get_balance(uuid))[0]["balance"]}"
+        return "Insufficient funds"
     elif operation == "DEPOSIT":
         sql = f"UPDATE Wallet SET balance = {balance + amount} WHERE uuid = {uuid}"
         with connect_db() as con:
             con.cursor().execute(sql)
             con.commit()
-        return f"Deposit successful. Now balance = {(await get_balance(uuid))[0]["balance"]}", 200
+        return f"Deposit successful. Now balance = {(await get_balance(uuid))[0]["balance"]}"
 
